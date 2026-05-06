@@ -3,7 +3,7 @@
 version: "3"
 
 vars:
-  BINARY_NAME: passgen
+  BINARY_NAME: jtgpwgen
   GOPATH:
     sh: echo $GOPATH
 

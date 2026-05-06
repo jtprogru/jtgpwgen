@@ -1,6 +1,6 @@
 package main
 
-import "github.com/jtprogru/passgen/cmd"
+import "github.com/jtprogru/jtgpwgen/cmd"
 
 func main() {
 	cmd.Execute()

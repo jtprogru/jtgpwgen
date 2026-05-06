@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jtprogru/passgen/internal/passgen"
+	"github.com/jtprogru/jtgpwgen/internal/passgen"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,7 +32,7 @@ var flags struct {
 }
 
 var rootCmd = &cobra.Command{
-	Use:     "passgen",
+	Use:     "jtgpwgen",
 	Short:   "Генератор паролей с настраиваемыми классами символов",
 	Version: Version,
 	Args:    cobra.NoArgs,
@@ -86,7 +86,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.passgen.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.jtgpwgen.yaml)")
 	rootCmd.SetVersionTemplate(versionTemplate())
 
 	f := rootCmd.Flags()
@@ -99,7 +99,7 @@ func init() {
 }
 
 func versionTemplate() string {
-	return fmt.Sprintf("passgen %s (commit %s, built %s by %s)\n", Version, Commit, Date, BuiltBy)
+	return fmt.Sprintf("jtgpwgen %s (commit %s, built %s by %s)\n", Version, Commit, Date, BuiltBy)
 }
 
 func initConfig() {
@@ -109,7 +109,7 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".passgen")
+		viper.SetConfigName(".jtgpwgen")
 		viper.SetConfigType("yaml")
 	}
 	viper.AutomaticEnv()

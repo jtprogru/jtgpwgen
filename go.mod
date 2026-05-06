@@ -1,4 +1,4 @@
-module github.com/jtprogru/passgen
+module github.com/jtprogru/jtgpwgen
 
 go 1.25
 

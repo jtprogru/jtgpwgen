@@ -1,4 +1,4 @@
-# passgen
+# jtgpwgen
 
 Генератор паролей с настраиваемыми классами символов.
 
@@ -6,38 +6,39 @@
 
 ## Установка
 
-### Homebrew
+### Homebrew (cask)
 
 ```bash
-brew install jtprogru/tap/passgen
+brew tap jtprogru/tap
+brew install --cask jtgpwgen
 ```
 
 ### go install
 
 ```bash
-go install github.com/jtprogru/passgen@latest
+go install github.com/jtprogru/jtgpwgen@latest
 ```
 
 ## Использование
 
 ```bash
 # дефолт: 24 символа, латиница + цифры + '@'
-passgen
+jtgpwgen
 
 # нужная длина
-passgen -l 32
+jtgpwgen -l 32
 
 # дополнительные спецсимволы (добавляются к '@')
-passgen -s '#$%^&*'
+jtgpwgen -s '#$%^&*'
 
 # без спецсимволов
-passgen --no-special
+jtgpwgen --no-special
 
 # без цифр
-passgen --no-digits
+jtgpwgen --no-digits
 
 # запоминаемый пароль (слоги CVC через дефис + 2 цифры + '@')
-passgen -m -l 24
+jtgpwgen -m -l 24
 ```
 
 ## Флаги
