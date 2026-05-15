@@ -73,7 +73,9 @@ var rootCmd = &cobra.Command{
 			}
 			return fmt.Errorf("generate: %w", err)
 		}
-		fmt.Fprintln(cmd.OutOrStdout(), pw)
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), pw); err != nil {
+			return fmt.Errorf("write output: %w", err)
+		}
 		return nil
 	},
 }
