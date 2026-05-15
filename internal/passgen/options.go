@@ -8,7 +8,7 @@ import (
 const (
 	DefaultLength      = 24
 	DefaultSpecialChar = "@"
-	MaxLength          = 4096
+	MaxLength          = 32768
 )
 
 type Options struct {
