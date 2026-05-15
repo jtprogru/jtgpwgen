@@ -58,6 +58,29 @@ jtgpwgen -m -l 24
 
 Источник энтропии — `crypto/rand`.
 
+## Верификация релизов
+
+Релизы подписываются [cosign](https://github.com/sigstore/cosign) в keyless-режиме (Sigstore OIDC), для каждого архива публикуется SBOM.
+
+```bash
+# Скачать релиз (пример):
+gh release download vX.Y.Z --pattern 'jtgpwgen_*'
+gh release download vX.Y.Z --pattern 'checksums.txt*'
+
+# Проверить подпись checksums.txt:
+cosign verify-blob \
+  --certificate checksums.txt.pem \
+  --signature checksums.txt.sig \
+  --certificate-identity-regexp 'https://github\.com/jtprogru/jtgpwgen/.+' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  checksums.txt
+
+# Проверить, что архив соответствует подписанной сумме:
+sha256sum -c checksums.txt --ignore-missing
+```
+
+SBOM (`*.sbom.json`, формат SPDX-JSON) публикуется рядом с архивами.
+
 ## Энтропия memorable-режима
 
 Memo-пароль строится из слогов CVC, разделённых дефисом, и завершается `NN@` (две цифры + `@`).
