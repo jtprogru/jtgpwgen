@@ -51,5 +51,14 @@ func Generate(opts Options) (string, error) {
 	if err := shuffleRunes(out); err != nil {
 		return "", err
 	}
-	return string(out), nil
+	s := string(out)
+	zeroRunes(out)
+	zeroRunes(pool)
+	return s, nil
+}
+
+func zeroRunes(s []rune) {
+	for i := range s {
+		s[i] = 0
+	}
 }
