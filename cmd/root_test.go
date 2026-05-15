@@ -42,6 +42,26 @@ func TestRunE_MemoTooShortReturnsError(t *testing.T) {
 	}
 }
 
+func TestRunE_NoLettersGeneratesDigitsAndSpecial(t *testing.T) {
+	out, err := runRoot(t, "--no-letters", "--length", "32")
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+	out = strings.TrimRight(out, "\n")
+	for _, r := range out {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+			t.Fatalf("unexpected letter %q in output %q", r, out)
+		}
+	}
+}
+
+func TestRunE_NoLettersNoDigitsNoSpecialIsError(t *testing.T) {
+	_, err := runRoot(t, "--no-letters", "--no-digits", "--no-special")
+	if !errors.Is(err, passgen.ErrNoCharClasses) {
+		t.Fatalf("want ErrNoCharClasses, got %v", err)
+	}
+}
+
 func TestRunE_DefaultsHappyPath(t *testing.T) {
 	out, err := runRoot(t, "--length", "24")
 	if err != nil {

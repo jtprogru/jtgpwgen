@@ -23,6 +23,7 @@ func newRootCmd() *cobra.Command {
 		digits    bool
 		noSpecial bool
 		noDigits  bool
+		noLetters bool
 		memo      bool
 	}
 
@@ -36,6 +37,7 @@ func newRootCmd() *cobra.Command {
 			specialSet := cmd.Flags().Changed("special")
 			noDigitsSet := cmd.Flags().Changed("no-digits")
 			noSpecialSet := cmd.Flags().Changed("no-special")
+			noLettersSet := cmd.Flags().Changed("no-letters")
 
 			if digitsSet && noDigitsSet {
 				return passgen.ErrConflictDigits
@@ -43,13 +45,16 @@ func newRootCmd() *cobra.Command {
 			if specialSet && noSpecialSet {
 				return passgen.ErrConflictSpecial
 			}
-			if flags.memo && (specialSet || noSpecialSet || digitsSet || noDigitsSet) {
+			if flags.memo && (specialSet || noSpecialSet || digitsSet || noDigitsSet || noLettersSet) {
 				return passgen.ErrMemoIncompatibleFlag
 			}
 
 			opts := passgen.DefaultOptions()
 			opts.Length = flags.length
 			opts.Memo = flags.memo
+			if noLettersSet {
+				opts.UseLetters = false
+			}
 			if noDigitsSet {
 				opts.UseDigits = false
 			}
@@ -84,6 +89,7 @@ func newRootCmd() *cobra.Command {
 	f.BoolVarP(&flags.digits, "digits", "d", false, "explicitly enable digits (default: enabled)")
 	f.BoolVar(&flags.noSpecial, "no-special", false, "disable special characters entirely")
 	f.BoolVar(&flags.noDigits, "no-digits", false, "disable digits")
+	f.BoolVar(&flags.noLetters, "no-letters", false, "disable letters")
 	f.BoolVarP(&flags.memo, "memo", "m", false, "generate a memorable password")
 
 	return cmd
