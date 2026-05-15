@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jtprogru/jtgpwgen/internal/passgen"
 	"github.com/spf13/cobra"
@@ -25,6 +26,8 @@ func newRootCmd() *cobra.Command {
 		noDigits  bool
 		noLetters bool
 		memo      bool
+		clip      bool
+		clipTTL   time.Duration
 	}
 
 	cmd := &cobra.Command{
@@ -76,6 +79,27 @@ func newRootCmd() *cobra.Command {
 				}
 				return fmt.Errorf("generate: %w", err)
 			}
+
+			if flags.clip {
+				tool, err := copyToClipboard(pw)
+				if err != nil {
+					return fmt.Errorf("clipboard: %w", err)
+				}
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(),
+					"password copied to clipboard via %s; clearing in %s\n",
+					tool, flags.clipTTL); err != nil {
+					return fmt.Errorf("write status: %w", err)
+				}
+				time.Sleep(flags.clipTTL)
+				if _, err := copyToClipboard(""); err != nil {
+					return fmt.Errorf("clipboard clear: %w", err)
+				}
+				if _, err := fmt.Fprintln(cmd.ErrOrStderr(), "clipboard cleared"); err != nil {
+					return fmt.Errorf("write status: %w", err)
+				}
+				return nil
+			}
+
 			if _, err := fmt.Fprintln(cmd.OutOrStdout(), pw); err != nil {
 				return fmt.Errorf("write output: %w", err)
 			}
@@ -92,6 +116,8 @@ func newRootCmd() *cobra.Command {
 	f.BoolVar(&flags.noDigits, "no-digits", false, "disable digits")
 	f.BoolVar(&flags.noLetters, "no-letters", false, "disable letters")
 	f.BoolVarP(&flags.memo, "memo", "m", false, "generate a memorable password")
+	f.BoolVar(&flags.clip, "clip", false, "copy password to clipboard instead of stdout")
+	f.DurationVar(&flags.clipTTL, "clip-ttl", 30*time.Second, "clear clipboard after this duration when --clip is used")
 
 	return cmd
 }
