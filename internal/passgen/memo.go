@@ -5,8 +5,12 @@ import (
 	"strings"
 )
 
+// memoConsonants excludes 'q' and 'x' because syllables containing them
+// (e.g. "qaq", "xiz") are essentially unpronounceable, defeating the
+// "memorable" goal. 18 consonants × 6 vowels × 18 consonants = 1944
+// distinct syllables (~10.92 bits each).
 var (
-	memoConsonants = []rune("bcdfghjklmnpqrstvwxz")
+	memoConsonants = []rune("bcdfghjklmnprstvwz")
 	memoVowels     = []rune("aeiouy")
 )
 
