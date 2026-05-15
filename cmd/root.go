@@ -28,10 +28,11 @@ func newRootCmd() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:     "jtgpwgen",
-		Short:   "Генератор паролей с настраиваемыми классами символов",
-		Version: Version,
-		Args:    cobra.NoArgs,
+		Use:          "jtgpwgen",
+		Short:        "Генератор паролей с настраиваемыми классами символов",
+		Version:      Version,
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			digitsSet := cmd.Flags().Changed("digits")
 			specialSet := cmd.Flags().Changed("special")
