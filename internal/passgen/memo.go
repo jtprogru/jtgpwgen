@@ -1,11 +1,38 @@
 package passgen
 
-import "strings"
+import (
+	"math"
+	"strings"
+)
 
+// memoConsonants excludes 'q' and 'x' because syllables containing them
+// (e.g. "qaq", "xiz") are essentially unpronounceable, defeating the
+// "memorable" goal. 18 consonants × 6 vowels × 18 consonants = 1944
+// distinct syllables (~10.92 bits each).
 var (
-	memoConsonants = []rune("bcdfghjklmnpqrstvwxz")
+	memoConsonants = []rune("bcdfghjklmnprstvwz")
 	memoVowels     = []rune("aeiouy")
 )
+
+const memoSuffixLen = 3 // "NN@"
+
+// memoSyllableCount returns how many CVC syllables generateMemo will emit
+// for the given requested target length.
+func memoSyllableCount(target int) int {
+	if target < 4 {
+		target = 4
+	}
+	return (target + 1) / 4
+}
+
+// MemoEntropyBits returns the approximate Shannon entropy in bits for a
+// memorable password of the requested length, given the current syllable
+// alphabet and the fixed "NN@" suffix.
+func MemoEntropyBits(length int) float64 {
+	n := memoSyllableCount(length)
+	syllableSpace := len(memoConsonants) * len(memoVowels) * len(memoConsonants)
+	return float64(n)*math.Log2(float64(syllableSpace)) + math.Log2(100)
+}
 
 // generateMemo builds a syllable-based pronounceable password.
 // Pattern: CVC syllables joined by '-', with a numeric+'@' suffix
@@ -18,10 +45,9 @@ func generateMemo(opts Options) (string, error) {
 		target = 4
 	}
 
-	const suffixLen = 3 // 2 digits + '@'
 	var b strings.Builder
 
-	for b.Len() < target-suffixLen {
+	for b.Len() < target-memoSuffixLen {
 		if b.Len() > 0 {
 			b.WriteRune('-')
 		}

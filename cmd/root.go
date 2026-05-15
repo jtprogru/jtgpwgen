@@ -4,114 +4,130 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jtprogru/jtgpwgen/internal/passgen"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
-	cfgFile string
 	Version = "dev"
 	Commit  = "none"
 	Date    = "today"
 	BuiltBy = "go build"
 )
 
-var flags struct {
-	length       int
-	special      string
-	digits       bool
-	noSpecial    bool
-	noDigits     bool
-	memo         bool
-	digitsSet    bool
-	specialSet   bool
-	noDigitsSet  bool
-	noSpecialSet bool
-}
-
-var rootCmd = &cobra.Command{
-	Use:     "jtgpwgen",
-	Short:   "Генератор паролей с настраиваемыми классами символов",
-	Version: Version,
-	Args:    cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		flags.digitsSet = cmd.Flags().Changed("digits")
-		flags.specialSet = cmd.Flags().Changed("special")
-		flags.noDigitsSet = cmd.Flags().Changed("no-digits")
-		flags.noSpecialSet = cmd.Flags().Changed("no-special")
-
-		if flags.digitsSet && flags.noDigitsSet {
-			return passgen.ErrConflictDigits
-		}
-		if flags.specialSet && flags.noSpecialSet {
-			return passgen.ErrConflictSpecial
-		}
-
-		opts := passgen.DefaultOptions()
-		opts.Length = flags.length
-		opts.Memo = flags.memo
-		if flags.noDigitsSet {
-			opts.UseDigits = false
-		}
-		if flags.noSpecialSet {
-			opts.UseSpecial = false
-		}
-		if flags.specialSet {
-			opts.UseSpecial = true
-			opts.ExtraSpecial = flags.special
-		}
-		if flags.memo && (flags.specialSet || flags.noSpecialSet || flags.digitsSet || flags.noDigitsSet) {
-			fmt.Fprintln(os.Stderr, "warning: --memo ignores character class flags")
-		}
-
-		pw, err := passgen.Generate(opts)
-		if err != nil {
-			if errors.Is(err, passgen.ErrLengthOutOfRange) || errors.Is(err, passgen.ErrNoCharClasses) {
-				return err
-			}
-			return fmt.Errorf("generate: %w", err)
-		}
-		fmt.Fprintln(cmd.OutOrStdout(), pw)
-		return nil
-	},
-}
-
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+func newRootCmd() *cobra.Command {
+	var flags struct {
+		length    int
+		special   string
+		digits    bool
+		noSpecial bool
+		noDigits  bool
+		noLetters bool
+		memo      bool
+		clip      bool
+		clipTTL   time.Duration
 	}
-}
 
-func init() {
-	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.jtgpwgen.yaml)")
-	rootCmd.SetVersionTemplate(versionTemplate())
+	cmd := &cobra.Command{
+		Use:          "jtgpwgen",
+		Short:        "Генератор паролей с настраиваемыми классами символов",
+		Version:      Version,
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			digitsSet := cmd.Flags().Changed("digits")
+			specialSet := cmd.Flags().Changed("special")
+			noDigitsSet := cmd.Flags().Changed("no-digits")
+			noSpecialSet := cmd.Flags().Changed("no-special")
+			noLettersSet := cmd.Flags().Changed("no-letters")
 
-	f := rootCmd.Flags()
+			if digitsSet && noDigitsSet {
+				return passgen.ErrConflictDigits
+			}
+			if specialSet && noSpecialSet {
+				return passgen.ErrConflictSpecial
+			}
+			if flags.memo && (specialSet || noSpecialSet || digitsSet || noDigitsSet || noLettersSet) {
+				return passgen.ErrMemoIncompatibleFlag
+			}
+
+			opts := passgen.DefaultOptions()
+			opts.Length = flags.length
+			opts.Memo = flags.memo
+			if noLettersSet {
+				opts.UseLetters = false
+			}
+			if noDigitsSet {
+				opts.UseDigits = false
+			}
+			if noSpecialSet {
+				opts.UseSpecial = false
+			}
+			if specialSet {
+				opts.UseSpecial = true
+				opts.ExtraSpecial = flags.special
+			}
+
+			pw, err := passgen.Generate(opts)
+			if err != nil {
+				if errors.Is(err, passgen.ErrLengthOutOfRange) ||
+					errors.Is(err, passgen.ErrNoCharClasses) ||
+					errors.Is(err, passgen.ErrMemoEntropyTooLow) {
+					return err
+				}
+				return fmt.Errorf("generate: %w", err)
+			}
+
+			if flags.clip {
+				tool, err := copyToClipboard(pw)
+				if err != nil {
+					return fmt.Errorf("clipboard: %w", err)
+				}
+				if _, err := fmt.Fprintf(cmd.ErrOrStderr(),
+					"password copied to clipboard via %s; clearing in %s\n",
+					tool, flags.clipTTL); err != nil {
+					return fmt.Errorf("write status: %w", err)
+				}
+				time.Sleep(flags.clipTTL)
+				if _, err := copyToClipboard(""); err != nil {
+					return fmt.Errorf("clipboard clear: %w", err)
+				}
+				if _, err := fmt.Fprintln(cmd.ErrOrStderr(), "clipboard cleared"); err != nil {
+					return fmt.Errorf("write status: %w", err)
+				}
+				return nil
+			}
+
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), pw); err != nil {
+				return fmt.Errorf("write output: %w", err)
+			}
+			return nil
+		},
+	}
+	cmd.SetVersionTemplate(versionTemplate())
+
+	f := cmd.Flags()
 	f.IntVarP(&flags.length, "length", "l", passgen.DefaultLength, "password length")
 	f.StringVarP(&flags.special, "special", "s", "", "extra special characters to include (added to default '@')")
 	f.BoolVarP(&flags.digits, "digits", "d", false, "explicitly enable digits (default: enabled)")
 	f.BoolVar(&flags.noSpecial, "no-special", false, "disable special characters entirely")
 	f.BoolVar(&flags.noDigits, "no-digits", false, "disable digits")
+	f.BoolVar(&flags.noLetters, "no-letters", false, "disable letters")
 	f.BoolVarP(&flags.memo, "memo", "m", false, "generate a memorable password")
+	f.BoolVar(&flags.clip, "clip", false, "copy password to clipboard instead of stdout")
+	f.DurationVar(&flags.clipTTL, "clip-ttl", 30*time.Second, "clear clipboard after this duration when --clip is used")
+
+	return cmd
+}
+
+func Execute() {
+	if err := newRootCmd().Execute(); err != nil {
+		os.Exit(1)
+	}
 }
 
 func versionTemplate() string {
 	return fmt.Sprintf("jtgpwgen %s (commit %s, built %s by %s)\n", Version, Commit, Date, BuiltBy)
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".jtgpwgen")
-		viper.SetConfigType("yaml")
-	}
-	viper.AutomaticEnv()
-	_ = viper.ReadInConfig()
 }

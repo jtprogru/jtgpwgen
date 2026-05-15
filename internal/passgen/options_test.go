@@ -15,7 +15,8 @@ func TestOptionsValidate(t *testing.T) {
 		{"zero length", Options{Length: 0, UseLetters: true}, ErrLengthOutOfRange},
 		{"too long", Options{Length: MaxLength + 1, UseLetters: true}, ErrLengthOutOfRange},
 		{"all classes off", Options{Length: 8}, ErrNoCharClasses},
-		{"memo bypasses class check", Options{Length: 16, Memo: true}, nil},
+		{"memo bypasses class check", Options{Length: 24, Memo: true}, nil},
+		{"memo too short", Options{Length: 16, Memo: true}, ErrMemoEntropyTooLow},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

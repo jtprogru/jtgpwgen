@@ -17,6 +17,7 @@ tasks:
     cmds: ["go run main.go {{ .CLI_ARGS }}"]
 
   tidy:
+    desc: Tidy go.mod and go.sum
     cmds: ["go mod tidy"]
 
   build:
@@ -26,16 +27,25 @@ tasks:
       - "CGO_ENABLED=0 go build -o ./dist/{{ .BINARY_NAME }} main.go"
 
   fmt:
+    desc: Format Go sources with gofmt -s
     cmds: ["gofmt -s -w ."]
 
   vet:
+    desc: Run go vet on all packages
     cmds: ["go vet ./..."]
 
   test:
+    desc: Run short tests with coverage profile
     cmds: ["go test --short -coverprofile=cover.out -v ./..."]
 
   lint:
+    desc: Run golangci-lint
     cmds: ["golangci-lint -v run"]
 
+  vuln:
+    desc: Scan dependencies for known vulnerabilities (govulncheck)
+    cmds: ["govulncheck ./..."]
+
   install:
+    desc: Install binary into $GOPATH/bin
     cmds: ["go install"]
