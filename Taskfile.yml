@@ -42,6 +42,10 @@ tasks:
     desc: Run golangci-lint
     cmds: ["golangci-lint -v run"]
 
+  vuln:
+    desc: Scan dependencies for known vulnerabilities (govulncheck)
+    cmds: ["govulncheck ./..."]
+
   install:
     desc: Install binary into $GOPATH/bin
     cmds: ["go install"]
