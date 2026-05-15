@@ -7,11 +7,9 @@ import (
 
 	"github.com/jtprogru/jtgpwgen/internal/passgen"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
-	cfgFile string
 	Version = "dev"
 	Commit  = "none"
 	Date    = "today"
@@ -87,8 +85,6 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.jtgpwgen.yaml)")
 	rootCmd.SetVersionTemplate(versionTemplate())
 
 	f := rootCmd.Flags()
@@ -102,18 +98,4 @@ func init() {
 
 func versionTemplate() string {
 	return fmt.Sprintf("jtgpwgen %s (commit %s, built %s by %s)\n", Version, Commit, Date, BuiltBy)
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".jtgpwgen")
-		viper.SetConfigType("yaml")
-	}
-	viper.AutomaticEnv()
-	_ = viper.ReadInConfig()
 }
