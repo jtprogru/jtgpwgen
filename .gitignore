@@ -17,5 +17,7 @@
 dist/
 *.log
 .vscode/
+.idea/
+.serena/
 plans/
 
