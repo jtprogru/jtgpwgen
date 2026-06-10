@@ -35,7 +35,7 @@ func DefaultOptions() Options {
 }
 
 var (
-	ErrLengthOutOfRange     = errors.New("length must be between 1 and 4096")
+	ErrLengthOutOfRange     = fmt.Errorf("length must be between 1 and %d", MaxLength)
 	ErrNoCharClasses        = errors.New("at least one character class must be enabled")
 	ErrConflictDigits       = errors.New("--digits and --no-digits are mutually exclusive")
 	ErrConflictSpecial      = errors.New("--special and --no-special are mutually exclusive")

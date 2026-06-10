@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jtprogru/jtgpwgen/internal/passgen"
@@ -90,12 +92,27 @@ func newRootCmd() *cobra.Command {
 					tool, flags.clipTTL); err != nil {
 					return fmt.Errorf("write status: %w", err)
 				}
-				time.Sleep(flags.clipTTL)
-				if _, err := copyToClipboard(""); err != nil {
+				// Wait for the TTL, but react to SIGINT/SIGTERM as well:
+				// an interrupted process must not leave the password in the
+				// clipboard indefinitely.
+				ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
+				defer stop()
+				timer := time.NewTimer(flags.clipTTL)
+				defer timer.Stop()
+				interrupted := false
+				select {
+				case <-timer.C:
+				case <-ctx.Done():
+					interrupted = true
+				}
+				if _, err := clearClipboard(); err != nil {
 					return fmt.Errorf("clipboard clear: %w", err)
 				}
 				if _, err := fmt.Fprintln(cmd.ErrOrStderr(), "clipboard cleared"); err != nil {
 					return fmt.Errorf("write status: %w", err)
+				}
+				if interrupted {
+					return errors.New("interrupted before clip-ttl elapsed; clipboard cleared")
 				}
 				return nil
 			}

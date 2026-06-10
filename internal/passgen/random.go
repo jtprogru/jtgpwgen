@@ -19,6 +19,9 @@ func secureIntn(n int) (int, error) {
 		}
 		v := binary.BigEndian.Uint64(buf[:])
 		if v < limit {
+			// #nosec G115 -- v % max < max == uint64(n), and n is a positive
+			// int (rune-pool size, well below MaxInt), so the conversion
+			// cannot overflow.
 			return int(v % max), nil
 		}
 	}
