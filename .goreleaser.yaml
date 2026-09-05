@@ -102,15 +102,11 @@ homebrew_casks:
     homepage: "https://github.com/jtprogru/jtgpwgen"
     description: "Password generator with configurable character classes and memorable mode"
     license: "MIT"
-    url:
-      verified: "github.com/jtprogru/jtgpwgen"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
     commit_msg_template: "chore(jtgpwgen): bring cask to {{ .Tag }}"
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/jtgpwgen"]
-          end
+    custom_block: |
+      postflight_steps do
+        run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{staged_path}}" }}/jtgpwgen"]
+      end
